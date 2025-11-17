@@ -1,0 +1,99 @@
+# Docker Compose configuration for Freelance MCP Server
+version: '3.8'
+
+services:
+  # Main MCP Server
+  freelance-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: freelance-mcp-server
+    ports:
+      - "8080:8080"
+    environment:
+      # Environment variables (override in .env file)
+      - GROQ_API_KEY=${GROQ_API_KEY:-your_groq_api_key_here}
+      - OWNER_COUNTRY_CODE=${OWNER_COUNTRY_CODE:-1}
+      - OWNER_PHONE_NUMBER=${OWNER_PHONE_NUMBER:-5551234567}
+      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///data/freelance.db}
+    volumes:
+      # Mount data directory for persistence
+      - ./data:/app/data
+      # Mount .env file
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    networks:
+      - freelance-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Redis for caching (future enhancement)
+  redis:
+    image: redis:7-alpine
+    container_name: freelance-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - freelance-network
+    profiles:
+      - with-cache
+
+  # Optional: PostgreSQL database (alternative to SQLite)
+  postgres:
+    image: postgres:15-alpine
+    container_name: freelance-postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-freelance}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-freelance_password}
+      - POSTGRES_DB=${POSTGRES_DB:-freelance_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - freelance-network
+    profiles:
+      - with-postgres
+
+networks:
+  freelance-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+
+# Usage:
+#
+# Basic startup:
+#   docker-compose up -d
+#
+# With Redis cache:
+#   docker-compose --profile with-cache up -d
+#
+# With PostgreSQL:
+#   docker-compose --profile with-postgres up -d
+#
+# Full stack:
+#   docker-compose --profile with-cache --profile with-postgres up -d
+#
+# View logs:
+#   docker-compose logs -f freelance-mcp
+#
+# Stop services:
+#   docker-compose down
+#
+# Rebuild and start:
+#   docker-compose up -d --build
