@@ -37,6 +37,16 @@ from pydantic import BaseModel, Field
 
 from mcp.server.fastmcp import Context, FastMCP
 
+# Import MCP extensions
+try:
+    from mcp_extensions import get_all_prompts, ServerCapabilities, ResourceTemplateManager
+    print(f"✅ MCP Extensions loaded successfully - {len(get_all_prompts())} prompts available")
+except ImportError as e:
+    print(f"Warning: MCP extensions not found - {e}")
+    get_all_prompts = lambda: {}
+    ServerCapabilities = None
+    ResourceTemplateManager = None
+
 # Load environment variables
 load_dotenv()
 
@@ -170,6 +180,7 @@ class FreelanceDatabase:
     def _initialize_sample_data(self):
         """Initialize with sample gigs for demonstration"""
         sample_gigs = [
+            # Upwork Gigs
             Gig(
                 id="upwork_001",
                 platform=Platform.UPWORK,
@@ -189,7 +200,44 @@ class FreelanceDatabase:
                 remote_ok=True
             ),
             Gig(
-                id="fiverr_002",
+                id="upwork_002",
+                platform=Platform.UPWORK,
+                title="Machine Learning Engineer for Recommendation System",
+                description="Build a recommendation engine using collaborative filtering. Experience with TensorFlow, PyTorch, and AWS required.",
+                budget_min=3000.0,
+                budget_max=6000.0,
+                hourly_rate=None,
+                project_type=ProjectType.FIXED_PRICE,
+                skills_required=["Machine Learning", "Python", "TensorFlow", "PyTorch", "AWS"],
+                client_rating=4.9,
+                client_reviews=45,
+                posted_date=datetime.now() - timedelta(hours=4),
+                deadline=datetime.now() + timedelta(days=45),
+                proposals_count=8,
+                url="https://upwork.com/job/002",
+                remote_ok=True
+            ),
+            Gig(
+                id="upwork_003",
+                platform=Platform.UPWORK,
+                title="Senior DevOps Engineer for Cloud Migration",
+                description="Lead cloud migration from on-prem to AWS. Need expertise in Docker, Kubernetes, Terraform, and CI/CD pipelines.",
+                budget_min=None,
+                budget_max=None,
+                hourly_rate=75.0,
+                project_type=ProjectType.HOURLY,
+                skills_required=["DevOps", "AWS", "Docker", "Kubernetes", "Terraform", "CI/CD"],
+                client_rating=5.0,
+                client_reviews=67,
+                posted_date=datetime.now() - timedelta(hours=12),
+                deadline=datetime.now() + timedelta(days=60),
+                proposals_count=5,
+                url="https://upwork.com/job/003",
+                remote_ok=True
+            ),
+            # Fiverr Gigs
+            Gig(
+                id="fiverr_001",
                 platform=Platform.FIVERR,
                 title="Python Automation Script Development",
                 description="Need a Python script to automate data processing tasks. Should work with CSV files and generate reports.",
@@ -203,11 +251,48 @@ class FreelanceDatabase:
                 posted_date=datetime.now() - timedelta(hours=5),
                 deadline=datetime.now() + timedelta(days=14),
                 proposals_count=7,
+                url="https://fiverr.com/gig/001",
+                remote_ok=True
+            ),
+            Gig(
+                id="fiverr_002",
+                platform=Platform.FIVERR,
+                title="Mobile App UI/UX Design - iOS & Android",
+                description="Design modern mobile app interface for fitness tracking app. Need Figma expertise and mobile design experience.",
+                budget_min=500.0,
+                budget_max=900.0,
+                hourly_rate=None,
+                project_type=ProjectType.FIXED_PRICE,
+                skills_required=["UI/UX Design", "Figma", "Mobile Design", "iOS", "Android"],
+                client_rating=4.7,
+                client_reviews=34,
+                posted_date=datetime.now() - timedelta(hours=10),
+                deadline=datetime.now() + timedelta(days=20),
+                proposals_count=15,
                 url="https://fiverr.com/gig/002",
                 remote_ok=True
             ),
             Gig(
-                id="freelancer_003",
+                id="fiverr_003",
+                platform=Platform.FIVERR,
+                title="Node.js REST API Development",
+                description="Build RESTful API with Express.js, MongoDB, and authentication. Must include comprehensive documentation.",
+                budget_min=600.0,
+                budget_max=1000.0,
+                hourly_rate=None,
+                project_type=ProjectType.FIXED_PRICE,
+                skills_required=["Node.js", "Express.js", "MongoDB", "REST API", "Authentication"],
+                client_rating=4.6,
+                client_reviews=19,
+                posted_date=datetime.now() - timedelta(hours=18),
+                deadline=datetime.now() + timedelta(days=25),
+                proposals_count=11,
+                url="https://fiverr.com/gig/003",
+                remote_ok=True
+            ),
+            # Freelancer Gigs
+            Gig(
+                id="freelancer_001",
                 platform=Platform.FREELANCER,
                 title="WordPress Website Debugging and Optimization",
                 description="Existing WordPress site needs debugging and performance optimization. Experience with PHP, MySQL required.",
@@ -221,7 +306,172 @@ class FreelanceDatabase:
                 posted_date=datetime.now() - timedelta(hours=8),
                 deadline=datetime.now() + timedelta(days=21),
                 proposals_count=18,
+                url="https://freelancer.com/project/001",
+                remote_ok=True
+            ),
+            Gig(
+                id="freelancer_002",
+                platform=Platform.FREELANCER,
+                title="Data Analyst for Business Intelligence Dashboard",
+                description="Create interactive BI dashboard using PowerBI or Tableau. Need SQL expertise and data visualization skills.",
+                budget_min=1200.0,
+                budget_max=2000.0,
+                hourly_rate=None,
+                project_type=ProjectType.FIXED_PRICE,
+                skills_required=["Data Analysis", "SQL", "PowerBI", "Tableau", "Data Visualization"],
+                client_rating=4.4,
+                client_reviews=28,
+                posted_date=datetime.now() - timedelta(hours=6),
+                deadline=datetime.now() + timedelta(days=35),
+                proposals_count=14,
+                url="https://freelancer.com/project/002",
+                remote_ok=False
+            ),
+            Gig(
+                id="freelancer_003",
+                platform=Platform.FREELANCER,
+                title="Flutter Mobile App Development",
+                description="Develop cross-platform mobile app using Flutter. Features include user auth, payments, and real-time notifications.",
+                budget_min=2500.0,
+                budget_max=4000.0,
+                hourly_rate=None,
+                project_type=ProjectType.FIXED_PRICE,
+                skills_required=["Flutter", "Dart", "Mobile Development", "Firebase", "REST API"],
+                client_rating=4.6,
+                client_reviews=41,
+                posted_date=datetime.now() - timedelta(hours=24),
+                deadline=datetime.now() + timedelta(days=50),
+                proposals_count=22,
                 url="https://freelancer.com/project/003",
+                remote_ok=True
+            ),
+            # Toptal Gigs
+            Gig(
+                id="toptal_001",
+                platform=Platform.TOPTAL,
+                title="Senior Full-Stack Engineer - React & Node.js",
+                description="Join our team to build enterprise SaaS platform. 3+ years experience required with modern tech stack.",
+                budget_min=None,
+                budget_max=None,
+                hourly_rate=90.0,
+                project_type=ProjectType.HOURLY,
+                skills_required=["React", "Node.js", "TypeScript", "PostgreSQL", "AWS", "Docker"],
+                client_rating=5.0,
+                client_reviews=89,
+                posted_date=datetime.now() - timedelta(hours=3),
+                deadline=datetime.now() + timedelta(days=90),
+                proposals_count=3,
+                url="https://toptal.com/project/001",
+                remote_ok=True
+            ),
+            Gig(
+                id="toptal_002",
+                platform=Platform.TOPTAL,
+                title="Blockchain Developer for DeFi Platform",
+                description="Build smart contracts for decentralized finance platform. Solidity and Web3.js expertise essential.",
+                budget_min=None,
+                budget_max=None,
+                hourly_rate=110.0,
+                project_type=ProjectType.HOURLY,
+                skills_required=["Blockchain", "Solidity", "Web3.js", "Ethereum", "Smart Contracts"],
+                client_rating=4.9,
+                client_reviews=32,
+                posted_date=datetime.now() - timedelta(hours=15),
+                deadline=datetime.now() + timedelta(days=120),
+                proposals_count=4,
+                url="https://toptal.com/project/002",
+                remote_ok=True
+            ),
+            # Guru Gigs
+            Gig(
+                id="guru_001",
+                platform=Platform.GURU,
+                title="Java Spring Boot Microservices Development",
+                description="Develop microservices architecture using Spring Boot. Experience with Kafka, Redis, and Docker required.",
+                budget_min=2000.0,
+                budget_max=3500.0,
+                hourly_rate=None,
+                project_type=ProjectType.FIXED_PRICE,
+                skills_required=["Java", "Spring Boot", "Microservices", "Kafka", "Redis", "Docker"],
+                client_rating=4.5,
+                client_reviews=21,
+                posted_date=datetime.now() - timedelta(hours=7),
+                deadline=datetime.now() + timedelta(days=40),
+                proposals_count=9,
+                url="https://guru.com/project/001",
+                remote_ok=True
+            ),
+            Gig(
+                id="guru_002",
+                platform=Platform.GURU,
+                title="Technical Content Writer for Developer Blog",
+                description="Write technical articles about cloud computing, DevOps, and software architecture. 2+ articles per week.",
+                budget_min=None,
+                budget_max=None,
+                hourly_rate=40.0,
+                project_type=ProjectType.RETAINER,
+                skills_required=["Technical Writing", "DevOps", "Cloud Computing", "Software Architecture"],
+                client_rating=4.3,
+                client_reviews=12,
+                posted_date=datetime.now() - timedelta(hours=20),
+                deadline=datetime.now() + timedelta(days=90),
+                proposals_count=16,
+                url="https://guru.com/project/002",
+                remote_ok=True
+            ),
+            # PeoplePerHour Gigs
+            Gig(
+                id="pph_001",
+                platform=Platform.PEOPLEPERHOUR,
+                title="SEO Specialist for E-commerce Website",
+                description="Improve SEO rankings for online store. Need expertise in technical SEO, content optimization, and link building.",
+                budget_min=800.0,
+                budget_max=1500.0,
+                hourly_rate=None,
+                project_type=ProjectType.FIXED_PRICE,
+                skills_required=["SEO", "Content Marketing", "Google Analytics", "Link Building"],
+                client_rating=4.4,
+                client_reviews=27,
+                posted_date=datetime.now() - timedelta(hours=9),
+                deadline=datetime.now() + timedelta(days=30),
+                proposals_count=13,
+                url="https://peopleperhour.com/project/001",
+                remote_ok=True
+            ),
+            Gig(
+                id="pph_002",
+                platform=Platform.PEOPLEPERHOUR,
+                title="Cybersecurity Consultant for Penetration Testing",
+                description="Conduct security audit and penetration testing for web applications. OSCP or CEH certification preferred.",
+                budget_min=None,
+                budget_max=None,
+                hourly_rate=85.0,
+                project_type=ProjectType.HOURLY,
+                skills_required=["Cybersecurity", "Penetration Testing", "Network Security", "OWASP"],
+                client_rating=4.8,
+                client_reviews=35,
+                posted_date=datetime.now() - timedelta(hours=14),
+                deadline=datetime.now() + timedelta(days=15),
+                proposals_count=6,
+                url="https://peopleperhour.com/project/002",
+                remote_ok=False
+            ),
+            Gig(
+                id="pph_003",
+                platform=Platform.PEOPLEPERHOUR,
+                title="Unity Game Developer for Mobile Game",
+                description="Create 2D mobile game using Unity. Experience with C#, game physics, and mobile optimization required.",
+                budget_min=1500.0,
+                budget_max=2800.0,
+                hourly_rate=None,
+                project_type=ProjectType.FIXED_PRICE,
+                skills_required=["Unity", "C#", "Game Development", "Mobile Games", "2D Graphics"],
+                client_rating=4.6,
+                client_reviews=18,
+                posted_date=datetime.now() - timedelta(hours=11),
+                deadline=datetime.now() + timedelta(days=55),
+                proposals_count=10,
+                url="https://peopleperhour.com/project/003",
                 remote_ok=True
             )
         ]
@@ -1143,6 +1393,87 @@ def track_application_status(applications: List[Dict[str, Any]]) -> Dict[str, An
             "application_trend": "Stable"  # This would be calculated from historical data
         }
     }
+
+
+# ============================================================================
+# MCP PROMPTS - Workflow Templates
+# ============================================================================
+
+# Load prompts from extensions for reference
+mcp_prompts = get_all_prompts()
+
+# Register prompts using FastMCP decorators
+@mcp.prompt()
+def find_and_apply(skills: str, max_budget: str = "5000", min_match_score: str = "0.7") -> str:
+    """Search for gigs matching skills and automatically generate proposals for top matches"""
+    return mcp_prompts["find_and_apply"].template.format(
+        skills=skills,
+        max_budget=max_budget,
+        min_match_score=min_match_score
+    )
+
+@mcp.prompt()
+def optimize_profile(profile_id: str, target_platforms: str = "upwork,fiverr", target_rate: str = "75") -> str:
+    """Analyze and optimize a freelancer profile for better visibility and match rates"""
+    return mcp_prompts["optimize_profile"].template.format(
+        profile_id=profile_id,
+        target_platforms=target_platforms,
+        target_rate=target_rate
+    )
+
+@mcp.prompt()
+def full_gig_workflow(user_name: str, title: str, skills: str, rate_min: str, rate_max: str) -> str:
+    """Complete workflow from profile creation to proposal submission"""
+    return mcp_prompts["full_gig_workflow"].template.format(
+        user_name=user_name,
+        title=title,
+        skills=skills,
+        rate_min=rate_min,
+        rate_max=rate_max
+    )
+
+@mcp.prompt()
+def market_research(platforms: str = "upwork,fiverr,freelancer", skill_category: str = "Web Development") -> str:
+    """Analyze market trends and opportunities across platforms"""
+    return mcp_prompts["market_research"].template.format(
+        platforms=platforms,
+        skill_category=skill_category
+    )
+
+@mcp.prompt()
+def code_review_workflow(code_language: str, review_type: str = "general") -> str:
+    """Automated code review workflow for freelance projects"""
+    return mcp_prompts["code_review_workflow"].template.format(
+        code_language=code_language,
+        review_type=review_type
+    )
+
+@mcp.prompt()
+def proposal_generator(gig_id: str, tone: str = "professional") -> str:
+    """Generate a targeted proposal for a specific gig"""
+    return mcp_prompts["proposal_generator"].template.format(
+        gig_id=gig_id,
+        tone=tone
+    )
+
+@mcp.prompt()
+def rate_negotiation(current_rate: str, target_rate: str, justification: str) -> str:
+    """Get strategic advice for rate negotiation"""
+    return mcp_prompts["rate_negotiation"].template.format(
+        current_rate=current_rate,
+        target_rate=target_rate,
+        justification=justification
+    )
+
+@mcp.prompt()
+def skill_gap_analysis(current_skills: str, target_role: str) -> str:
+    """Analyze skill gaps and get learning recommendations"""
+    return mcp_prompts["skill_gap_analysis"].template.format(
+        current_skills=current_skills,
+        target_role=target_role
+    )
+
+print(f"✅ {len(mcp_prompts)} MCP workflow prompts registered")
 
 
 # Main execution

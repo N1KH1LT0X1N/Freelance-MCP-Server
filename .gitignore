@@ -8,11 +8,29 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
+env/
 
-# Env Files
+# Environment files (contains secrets)
 .env
+.env.local
+.env.*.local
 
-# main python files
-freelance_client.py
-freelance_client2.py
-main.py
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Logs
+*.log
