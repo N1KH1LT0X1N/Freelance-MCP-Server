@@ -1,9 +1,21 @@
 [project]
-name = "mcp-server-1"
-version = "0.1.0"
-description = "Add your description here"
+name = "freelance-mcp-server"
+version = "2.1.0"
+description = "AI-powered freelance gig aggregator with MCP protocol - search gigs, generate proposals, negotiate rates"
 readme = "README.md"
 requires-python = ">=3.11"
+license = {text = "MIT"}
+keywords = ["mcp", "freelance", "ai", "langchain", "groq", "upwork", "fiverr"]
+authors = [{name = "Freelance MCP Team"}]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
 dependencies = [
     "langchain>=0.3.27",
     "langchain-groq>=0.3.7",
@@ -11,4 +23,18 @@ dependencies = [
     "mcp-use>=1.3.8",
     "mcp[cli]>=1.12.4",
     "python-dotenv>=1.1.1",
+    "pydantic>=2.0.0",
+    "psutil>=5.9.0",
 ]
+
+[project.optional-dependencies]
+dev = ["black>=23.0.0", "flake8>=6.0.0"]
+test = ["pytest>=7.0.0", "pytest-asyncio>=0.21.0"]
+
+[project.urls]
+Homepage = "https://github.com/N1KH1LT0X1N/Freelance-MCP-Server"
+Repository = "https://github.com/N1KH1LT0X1N/Freelance-MCP-Server"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
