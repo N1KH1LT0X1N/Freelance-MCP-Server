@@ -37,6 +37,16 @@ from pydantic import BaseModel, Field
 
 from mcp.server.fastmcp import Context, FastMCP
 
+# Import MCP extensions
+try:
+    from mcp_extensions import get_all_prompts, ServerCapabilities, ResourceTemplateManager
+    print(f"✅ MCP Extensions loaded successfully - {len(get_all_prompts())} prompts available")
+except ImportError as e:
+    print(f"Warning: MCP extensions not found - {e}")
+    get_all_prompts = lambda: {}
+    ServerCapabilities = None
+    ResourceTemplateManager = None
+
 # Load environment variables
 load_dotenv()
 
@@ -1383,6 +1393,87 @@ def track_application_status(applications: List[Dict[str, Any]]) -> Dict[str, An
             "application_trend": "Stable"  # This would be calculated from historical data
         }
     }
+
+
+# ============================================================================
+# MCP PROMPTS - Workflow Templates
+# ============================================================================
+
+# Load prompts from extensions for reference
+mcp_prompts = get_all_prompts()
+
+# Register prompts using FastMCP decorators
+@mcp.prompt()
+def find_and_apply(skills: str, max_budget: str = "5000", min_match_score: str = "0.7") -> str:
+    """Search for gigs matching skills and automatically generate proposals for top matches"""
+    return mcp_prompts["find_and_apply"].template.format(
+        skills=skills,
+        max_budget=max_budget,
+        min_match_score=min_match_score
+    )
+
+@mcp.prompt()
+def optimize_profile(profile_id: str, target_platforms: str = "upwork,fiverr", target_rate: str = "75") -> str:
+    """Analyze and optimize a freelancer profile for better visibility and match rates"""
+    return mcp_prompts["optimize_profile"].template.format(
+        profile_id=profile_id,
+        target_platforms=target_platforms,
+        target_rate=target_rate
+    )
+
+@mcp.prompt()
+def full_gig_workflow(user_name: str, title: str, skills: str, rate_min: str, rate_max: str) -> str:
+    """Complete workflow from profile creation to proposal submission"""
+    return mcp_prompts["full_gig_workflow"].template.format(
+        user_name=user_name,
+        title=title,
+        skills=skills,
+        rate_min=rate_min,
+        rate_max=rate_max
+    )
+
+@mcp.prompt()
+def market_research(platforms: str = "upwork,fiverr,freelancer", skill_category: str = "Web Development") -> str:
+    """Analyze market trends and opportunities across platforms"""
+    return mcp_prompts["market_research"].template.format(
+        platforms=platforms,
+        skill_category=skill_category
+    )
+
+@mcp.prompt()
+def code_review_workflow(code_language: str, review_type: str = "general") -> str:
+    """Automated code review workflow for freelance projects"""
+    return mcp_prompts["code_review_workflow"].template.format(
+        code_language=code_language,
+        review_type=review_type
+    )
+
+@mcp.prompt()
+def proposal_generator(gig_id: str, tone: str = "professional") -> str:
+    """Generate a targeted proposal for a specific gig"""
+    return mcp_prompts["proposal_generator"].template.format(
+        gig_id=gig_id,
+        tone=tone
+    )
+
+@mcp.prompt()
+def rate_negotiation(current_rate: str, target_rate: str, justification: str) -> str:
+    """Get strategic advice for rate negotiation"""
+    return mcp_prompts["rate_negotiation"].template.format(
+        current_rate=current_rate,
+        target_rate=target_rate,
+        justification=justification
+    )
+
+@mcp.prompt()
+def skill_gap_analysis(current_skills: str, target_role: str) -> str:
+    """Analyze skill gaps and get learning recommendations"""
+    return mcp_prompts["skill_gap_analysis"].template.format(
+        current_skills=current_skills,
+        target_role=target_role
+    )
+
+print(f"✅ {len(mcp_prompts)} MCP workflow prompts registered")
 
 
 # Main execution
