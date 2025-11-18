@@ -2,6 +2,14 @@
 
 A comprehensive freelance platform aggregator MCP server that helps users find gigs, generate proposals, negotiate rates, and optimize their freelance profiles using AI
 
+## 📖 Documentation Quick Links
+
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick commands & tool reference
+- **[VALIDATION_STATUS.md](VALIDATION_STATUS.md)** - Test results & production status
+- **[DEBUG_REPORT.md](DEBUG_REPORT.md)** - Bug fixes & debugging summary
+- **[STRUCTURE.md](STRUCTURE.md)** - Project organization & file structure
+- **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** - Complete debugging summary
+
 ## 🚀 Quick Start for Claude Desktop Users
 
 **Want to use this with Claude Desktop right away? Follow these 3 steps:**
@@ -45,6 +53,30 @@ A comprehensive freelance platform aggregator MCP server that helps users find g
 **Need more detailed instructions?** See [Integration with Claude Desktop](#integration-with-claude-desktop-recommended) below.
 
 ---
+
+## File Structure
+
+```
+mcp-server-1/
+├── freelance_server.py          # Main MCP server (run this!)
+├── requirements.txt             # Dependencies
+├── .env.example                 # Environment template
+├── README.md                    # This file
+├── STRUCTURE.md                 # Detailed structure guide
+│
+├── core/                        # Core modules
+├── database/                    # Database layer
+├── mcp_extensions/              # MCP protocol extensions
+├── utils/                       # Utilities
+│
+├── tests/                       # Test suite
+├── examples/                    # Example code
+├── docs/                        # Documentation
+│
+└── .github/                     # GitHub templates & workflows
+```
+
+See [STRUCTURE.md](STRUCTURE.md) for complete directory documentation.
 
 ## Quick Start
 

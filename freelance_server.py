@@ -40,7 +40,7 @@ from mcp.server.fastmcp import Context, FastMCP
 # Import MCP extensions
 try:
     from mcp_extensions import get_all_prompts, ServerCapabilities, ResourceTemplateManager
-    print(f"✅ MCP Extensions loaded successfully - {len(get_all_prompts())} prompts available")
+    print(f"[OK] MCP Extensions loaded successfully - {len(get_all_prompts())} prompts available")
 except ImportError as e:
     print(f"Warning: MCP extensions not found - {e}")
     get_all_prompts = lambda: {}
@@ -1413,7 +1413,7 @@ def find_and_apply(skills: str, max_budget: str = "5000", min_match_score: str =
     )
 
 @mcp.prompt()
-def optimize_profile(profile_id: str, target_platforms: str = "upwork,fiverr", target_rate: str = "75") -> str:
+def optimize_profile_prompt(profile_id: str, target_platforms: str = "upwork,fiverr", target_rate: str = "75") -> str:
     """Analyze and optimize a freelancer profile for better visibility and match rates"""
     return mcp_prompts["optimize_profile"].template.format(
         profile_id=profile_id,
@@ -1473,7 +1473,7 @@ def skill_gap_analysis(current_skills: str, target_role: str) -> str:
         target_role=target_role
     )
 
-print(f"✅ {len(mcp_prompts)} MCP workflow prompts registered")
+print(f"[OK] {len(mcp_prompts)} MCP workflow prompts registered")
 
 
 # Main execution
@@ -1494,13 +1494,13 @@ def main():
         # Run with stdio transport for local connection
         mcp.run(transport="stdio")
     elif args.transport == "sse":
-        # Run with SSE transport
-        print(f"Starting SSE server on http://{args.host}:{args.port}")
-        mcp.run(transport="sse", host=args.host, port=args.port)
+        # Run with SSE transport (host/port must be configured in FastMCP init)
+        print(f"Starting SSE server...")
+        mcp.run(transport="sse")
     elif args.transport == "streamable-http":
-        # Run with HTTP transport
-        print(f"Starting HTTP server on http://{args.host}:{args.port}")
-        mcp.run(transport="streamable-http", host=args.host, port=args.port)
+        # Run with HTTP transport (host/port must be configured in FastMCP init)
+        print(f"Starting HTTP server...")
+        mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":

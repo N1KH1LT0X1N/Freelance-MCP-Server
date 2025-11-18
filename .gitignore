@@ -16,6 +16,9 @@ env/
 .env.local
 .env.*.local
 
+# Archive folder (old/deprecated files)
+archive/
+
 # IDE
 .vscode/
 .idea/
