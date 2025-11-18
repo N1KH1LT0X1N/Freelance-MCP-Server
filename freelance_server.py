@@ -1705,10 +1705,10 @@ async def research_client_intel(client_data: Dict[str, Any]) -> Dict[str, Any]:
 # ============================================================================
 
 @mcp.tool()
-async def setup_auto_bidding(enabled: bool = True, min_match_score: float = 0.7,
-                            max_bids_per_day: int = 5, min_budget: float = 500,
-                            max_budget: float = 10000, auto_apply: bool = False,
-                            skills: List[str] = None) -> Dict[str, Any]:
+def setup_auto_bidding(enabled: bool = True, min_match_score: float = 0.7,
+                       max_bids_per_day: int = 5, min_budget: float = 500,
+                       max_budget: float = 10000, auto_apply: bool = False,
+                       skills: List[str] = None) -> Dict[str, Any]:
     """
     Configure automatic bidding agent
 
