@@ -22,6 +22,7 @@ Usage:
     uv run mcp dev freelance_server.py
 """
 
+import asyncio
 import json
 import os
 import re
@@ -36,6 +37,16 @@ from langchain_groq import ChatGroq
 from pydantic import BaseModel, Field
 
 from mcp.server.fastmcp import Context, FastMCP
+
+# Import real API clients
+try:
+    from freelance_api_clients import search_freelance_gigs, FreelanceAPIAggregator, SearchCriteria
+    REAL_API_AVAILABLE = True
+    print("[OK] Real API clients loaded successfully")
+except ImportError as e:
+    REAL_API_AVAILABLE = False
+    print(f"[WARNING] Real API clients not available: {e}")
+    print("[INFO] Falling back to mock data mode")
 
 # Import MCP extensions
 try:
@@ -592,43 +603,71 @@ def get_market_trends() -> str:
 
 # Tools
 @mcp.tool()
-def search_gigs(skills: List[str], max_budget: Optional[float] = None, 
-                min_budget: Optional[float] = None, project_type: Optional[str] = None,
-                platforms: Optional[List[str]] = None) -> Dict[str, Any]:
+async def search_gigs(skills: List[str], max_budget: Optional[float] = None,
+                      min_budget: Optional[float] = None, project_type: Optional[str] = None,
+                      platforms: Optional[List[str]] = None, use_real_api: bool = True) -> Dict[str, Any]:
     """
     Search for freelance gigs based on skills and criteria
-    
+
     Args:
         skills: List of skills to match against
         max_budget: Maximum budget/rate to filter by
         min_budget: Minimum budget/rate to filter by
         project_type: Type of project (fixed_price, hourly, retainer, contest)
-        platforms: List of platforms to search (upwork, fiverr, freelancer, etc.)
+        platforms: List of platforms to search (upwork, freelancer, etc.)
+        use_real_api: Use real API integration (True) or mock data (False)
     """
-    # Authentication is handled automatically by FastMCP when AUTH_TOKEN is set
-    
+    # Try to use real API if available and requested
+    if use_real_api and REAL_API_AVAILABLE:
+        try:
+            print(f"🔍 Searching real APIs for gigs with skills: {skills}")
+
+            # Use real API clients
+            results = await search_freelance_gigs(
+                skills=skills,
+                max_budget=max_budget,
+                min_budget=min_budget,
+                project_type=project_type,
+                platforms=platforms,
+                limit=10
+            )
+
+            # Add source indicator
+            results["data_source"] = "real_api"
+            results["platforms_available"] = ["upwork", "freelancer"]
+
+            return results
+
+        except Exception as e:
+            print(f"❌ Real API search failed: {e}")
+            print("⚠️ Falling back to mock data")
+            # Fall through to mock data
+
+    # Fallback to mock data
+    print("📊 Using mock data (set use_real_api=False or configure API keys for real data)")
+
     filtered_gigs = []
-    
+
     for gig in db.gigs.values():
         # Platform filter
         if platforms and gig.platform.value not in [p.lower() for p in platforms]:
             continue
-            
+
         # Project type filter
         if project_type and gig.project_type.value != project_type.lower():
             continue
-            
+
         # Budget filters
         if max_budget:
             gig_max = gig.budget_max or gig.hourly_rate
             if gig_max and gig_max > max_budget:
                 continue
-                
+
         if min_budget:
             gig_min = gig.budget_min or gig.hourly_rate
             if gig_min and gig_min < min_budget:
                 continue
-        
+
         # Skill matching
         skill_match_score = calculate_match_score(skills, gig.skills_required)
         if skill_match_score > 0:  # At least some skill match
@@ -636,10 +675,10 @@ def search_gigs(skills: List[str], max_budget: Optional[float] = None,
                 "gig": gig,
                 "match_score": skill_match_score
             })
-    
+
     # Sort by match score
     filtered_gigs.sort(key=lambda x: x["match_score"], reverse=True)
-    
+
     results = []
     for item in filtered_gigs[:10]:  # Top 10 matches
         gig = item["gig"]
@@ -656,7 +695,7 @@ def search_gigs(skills: List[str], max_budget: Optional[float] = None,
             "posted_date": gig.posted_date.strftime("%Y-%m-%d %H:%M"),
             "url": gig.url
         })
-    
+
     return {
         "total_found": len(results),
         "gigs": results,
@@ -666,7 +705,9 @@ def search_gigs(skills: List[str], max_budget: Optional[float] = None,
             "min_budget": min_budget,
             "project_type": project_type,
             "platforms": platforms
-        }
+        },
+        "data_source": "mock_data",
+        "note": "Using demo data. Configure API keys (UPWORK_ACCESS_TOKEN, FREELANCER_OAUTH_TOKEN) for real gigs."
     }
 
 

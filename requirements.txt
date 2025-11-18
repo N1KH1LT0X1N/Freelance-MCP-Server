@@ -5,6 +5,13 @@ pydantic>=2.0.0
 python-dotenv>=1.0.0
 pathlib>=1.0.0
 
+# API client dependencies
+aiohttp>=3.9.0
+requests>=2.31.0
+tenacity>=8.2.0
+cachetools>=5.3.0
+freelancersdk>=0.1.20
+
 # Monitoring and performance
 psutil>=5.9.0
 
