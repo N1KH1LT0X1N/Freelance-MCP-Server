@@ -48,6 +48,32 @@ except ImportError as e:
     print(f"[WARNING] Real API clients not available: {e}")
     print("[INFO] Falling back to mock data mode")
 
+# Import AI/ML advanced features
+try:
+    from ai_features import (
+        AIGigRecommender, SmartPricingEngine, MarketIntelligence,
+        ClientIntelligenceSystem, get_gig_recommendations,
+        calculate_optimal_pricing, analyze_market_trends, research_client
+    )
+    AI_FEATURES_AVAILABLE = True
+    print("[OK] AI features loaded successfully")
+except ImportError as e:
+    AI_FEATURES_AVAILABLE = False
+    print(f"[WARNING] AI features not available: {e}")
+    print("[INFO] Install: pip install scikit-learn numpy pandas")
+
+# Import automation features
+try:
+    from automation import (
+        AutoBiddingAgent, PortfolioGenerator, NotificationSystem,
+        AutoBidConfig, NotificationChannel
+    )
+    AUTOMATION_AVAILABLE = True
+    print("[OK] Automation features loaded successfully")
+except ImportError as e:
+    AUTOMATION_AVAILABLE = False
+    print(f"[WARNING] Automation features not available: {e}")
+
 # Import MCP extensions
 try:
     from mcp_extensions import get_all_prompts, ServerCapabilities, ResourceTemplateManager
@@ -1433,6 +1459,386 @@ def track_application_status(applications: List[Dict[str, Any]]) -> Dict[str, An
             "best_performing_platform": best_platform,
             "application_trend": "Stable"  # This would be calculated from historical data
         }
+    }
+
+
+# ============================================================================
+# ADVANCED AI/ML TOOLS
+# ============================================================================
+
+@mcp.tool()
+async def get_smart_recommendations(skills: List[str], max_budget: Optional[float] = None,
+                                   min_budget: Optional[float] = None,
+                                   platforms: Optional[List[str]] = None,
+                                   top_n: int = 10, use_real_api: bool = True) -> Dict[str, Any]:
+    """
+    Get AI-powered gig recommendations with success prediction and optimal pricing
+
+    Args:
+        skills: List of skills to match against
+        max_budget: Maximum budget filter
+        min_budget: Minimum budget filter
+        platforms: Platforms to search
+        top_n: Number of recommendations to return
+        use_real_api: Use real API or mock data
+
+    Returns:
+        AI-powered recommendations with win probability, optimal pricing, and strategy
+    """
+    if not AI_FEATURES_AVAILABLE:
+        return {
+            "error": "AI features not available. Install: pip install scikit-learn numpy pandas",
+            "recommendations": []
+        }
+
+    # First, get available gigs
+    search_results = await search_gigs(
+        skills=skills,
+        max_budget=max_budget,
+        min_budget=min_budget,
+        platforms=platforms,
+        use_real_api=use_real_api
+    )
+
+    available_gigs = search_results.get('gigs', [])
+
+    if not available_gigs:
+        return {
+            "message": "No gigs found matching your criteria",
+            "recommendations": []
+        }
+
+    # Get user profile (simplified - would come from database)
+    user_profile = {
+        'skills': skills,
+        'hourly_rate_min': min_budget or 25,
+        'hourly_rate_max': max_budget or 100,
+        'years_experience': 3,
+        'success_rate': 85
+    }
+
+    # Get AI recommendations
+    recommendations = await get_gig_recommendations(available_gigs, user_profile, top_n)
+
+    # Format results
+    results = []
+    for rec in recommendations:
+        results.append({
+            "gig_id": rec.gig_id,
+            "title": rec.title,
+            "platform": rec.platform,
+            "recommendation_score": round(rec.recommendation_score * 100, 1),
+            "win_probability": round(rec.win_probability * 100, 1),
+            "optimal_bid": rec.optimal_bid_amount,
+            "risk_level": rec.risk_level,
+            "estimated_competition": rec.estimated_competition,
+            "client_quality": round(rec.client_quality_score * 100, 1),
+            "reasoning": rec.reasoning,
+            "suggested_approach": rec.suggested_approach
+        })
+
+    return {
+        "total_recommendations": len(results),
+        "recommendations": results,
+        "data_source": search_results.get('data_source', 'unknown')
+    }
+
+
+@mcp.tool()
+async def calculate_pricing_strategy(gig_id: str, skills: List[str],
+                                     user_rate_min: float = 25,
+                                     user_rate_max: float = 100,
+                                     success_rate: float = 85) -> Dict[str, Any]:
+    """
+    Calculate optimal pricing strategy for a specific gig using AI
+
+    Args:
+        gig_id: ID of the gig
+        skills: Your skills
+        user_rate_min: Your minimum hourly rate
+        user_rate_max: Your maximum hourly rate
+        success_rate: Your historical success rate (0-100)
+
+    Returns:
+        Optimal pricing recommendation with strategy
+    """
+    if not AI_FEATURES_AVAILABLE:
+        return {
+            "error": "AI features not available. Install: pip install scikit-learn numpy pandas"
+        }
+
+    # Find the gig (would query from database/API in production)
+    gig = db.gigs.get(gig_id)
+
+    if not gig:
+        return {"error": f"Gig {gig_id} not found"}
+
+    # Convert gig to dict
+    gig_dict = {
+        'id': gig.id,
+        'title': gig.title,
+        'budget_min': gig.budget_min,
+        'budget_max': gig.budget_max,
+        'project_type': gig.project_type.value,
+        'skills_required': gig.skills_required,
+        'proposals_count': gig.proposals_count
+    }
+
+    user_profile = {
+        'hourly_rate_min': user_rate_min,
+        'hourly_rate_max': user_rate_max,
+        'success_rate': success_rate,
+        'skills': skills
+    }
+
+    # Calculate optimal pricing
+    pricing = await calculate_optimal_pricing(gig_dict, user_profile)
+
+    return {
+        "gig_id": gig_id,
+        "gig_title": gig.title,
+        "pricing_recommendation": pricing,
+        "calculated_at": datetime.now().isoformat()
+    }
+
+
+@mcp.tool()
+async def analyze_skill_demand(skills: List[str], use_real_api: bool = True) -> Dict[str, Any]:
+    """
+    Analyze market demand for specific skills
+
+    Args:
+        skills: List of skills to analyze
+        use_real_api: Use real API or mock data
+
+    Returns:
+        Market insights for each skill including demand, rates, and trends
+    """
+    if not AI_FEATURES_AVAILABLE:
+        return {
+            "error": "AI features not available. Install: pip install scikit-learn numpy pandas"
+        }
+
+    # Get recent gigs for analysis
+    search_results = await search_gigs(
+        skills=skills,
+        use_real_api=use_real_api,
+        platforms=None
+    )
+
+    gigs = search_results.get('gigs', [])
+
+    if not gigs:
+        # Use mock data
+        gigs = [
+            {
+                'id': gig.id,
+                'platform': gig.platform.value,
+                'skills_required': gig.skills_required,
+                'budget_max': gig.budget_max,
+                'hourly_rate': gig.hourly_rate,
+                'project_type': gig.project_type.value,
+                'proposals_count': gig.proposals_count
+            }
+            for gig in db.gigs.values()
+        ]
+
+    # Analyze trends
+    trends = await analyze_market_trends(skills, gigs)
+
+    # Format results
+    results = {}
+    for skill, insight in trends.items():
+        results[skill] = {
+            "demand_score": round(insight.demand_score * 100, 1),
+            "average_rate": insight.average_rate,
+            "rate_trend": insight.rate_trend,
+            "competition_level": insight.competition_level,
+            "top_platforms": insight.top_platforms,
+            "recommendation": insight.recommended_action
+        }
+
+    return {
+        "skills_analyzed": list(results.keys()),
+        "market_insights": results,
+        "analyzed_at": datetime.now().isoformat(),
+        "based_on_gigs": len(gigs)
+    }
+
+
+@mcp.tool()
+async def research_client_intel(client_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Research client quality and reliability
+
+    Args:
+        client_data: Client information (id, rating, reviews, total_spent, etc.)
+
+    Returns:
+        Detailed client intelligence report
+    """
+    if not AI_FEATURES_AVAILABLE:
+        return {
+            "error": "AI features not available. Install: pip install scikit-learn numpy pandas"
+        }
+
+    # Research client
+    intel = await research_client(client_data)
+
+    return {
+        "client_id": intel.client_id,
+        "quality_score": round(intel.quality_score * 100, 1),
+        "payment_reliability": round(intel.payment_reliability * 100, 1),
+        "communication_score": round(intel.communication_score * 100, 1),
+        "project_success_rate": round(intel.project_success_rate * 100, 1),
+        "total_spent": intel.total_spent,
+        "total_projects": intel.total_projects,
+        "red_flags": intel.red_flags,
+        "green_flags": intel.green_flags,
+        "recommendation": intel.recommendation,
+        "researched_at": datetime.now().isoformat()
+    }
+
+
+# ============================================================================
+# AUTOMATION TOOLS
+# ============================================================================
+
+@mcp.tool()
+async def setup_auto_bidding(enabled: bool = True, min_match_score: float = 0.7,
+                            max_bids_per_day: int = 5, min_budget: float = 500,
+                            max_budget: float = 10000, auto_apply: bool = False,
+                            skills: List[str] = None) -> Dict[str, Any]:
+    """
+    Configure automatic bidding agent
+
+    Args:
+        enabled: Enable auto-bidding
+        min_match_score: Minimum match score (0-1)
+        max_bids_per_day: Maximum bids per day
+        min_budget: Minimum budget to consider
+        max_budget: Maximum budget to consider
+        auto_apply: Actually submit bids (True) or just draft (False)
+        skills: Required skills filter
+
+    Returns:
+        Auto-bid configuration status
+    """
+    if not AUTOMATION_AVAILABLE:
+        return {
+            "error": "Automation features not available. Check installation."
+        }
+
+    config = AutoBidConfig(
+        enabled=enabled,
+        min_match_score=min_match_score,
+        max_bids_per_day=max_bids_per_day,
+        min_budget=min_budget,
+        max_budget=max_budget,
+        auto_apply=auto_apply,
+        required_skills=skills or []
+    )
+
+    return {
+        "status": "configured",
+        "config": {
+            "enabled": config.enabled,
+            "min_match_score": config.min_match_score,
+            "max_bids_per_day": config.max_bids_per_day,
+            "budget_range": f"${config.min_budget}-${config.max_budget}",
+            "auto_apply": config.auto_apply,
+            "required_skills": config.required_skills
+        },
+        "warning": "Auto-bidding is currently in DRAFT mode. Set auto_apply=True to actually submit bids." if not auto_apply else None
+    }
+
+
+@mcp.tool()
+async def generate_portfolio(name: str, title: str, skills: List[str],
+                            years_experience: int = 3,
+                            project_history: List[Dict] = None) -> Dict[str, Any]:
+    """
+    Auto-generate professional portfolio
+
+    Args:
+        name: Your name
+        title: Professional title
+        skills: List of skills
+        years_experience: Years of experience
+        project_history: List of past projects
+
+    Returns:
+        Generated portfolio in HTML and Markdown
+    """
+    if not AUTOMATION_AVAILABLE:
+        return {
+            "error": "Automation features not available. Check installation."
+        }
+
+    user_profile = {
+        'name': name,
+        'title': title,
+        'skills': skills,
+        'years_experience': years_experience,
+        'bio': f"Experienced {title} with {years_experience} years of expertise"
+    }
+
+    generator = PortfolioGenerator(user_profile, project_history or [])
+    portfolio = await generator.generate_portfolio()
+
+    return {
+        "title": portfolio.title,
+        "description": portfolio.description,
+        "total_projects": len(portfolio.projects),
+        "total_value": portfolio.total_value,
+        "success_rate": portfolio.success_rate,
+        "skills": portfolio.skills,
+        "html_portfolio": portfolio.generated_html[:500] + "...",  # Truncate for display
+        "markdown_portfolio": portfolio.generated_markdown[:500] + "...",
+        "full_html_length": len(portfolio.generated_html),
+        "full_markdown_length": len(portfolio.generated_markdown),
+        "download_html": "Save portfolio.generated_html to file",
+        "download_markdown": "Save portfolio.generated_markdown to file"
+    }
+
+
+@mcp.tool()
+async def send_notification(channel: str, title: str, message: str,
+                           data: Optional[Dict] = None) -> Dict[str, Any]:
+    """
+    Send notification through specified channel
+
+    Args:
+        channel: Notification channel (email, slack, discord, console, webhook)
+        title: Notification title
+        message: Notification message
+        data: Optional additional data
+
+    Returns:
+        Send status
+    """
+    if not AUTOMATION_AVAILABLE:
+        return {
+            "error": "Automation features not available. Check installation."
+        }
+
+    notifier = NotificationSystem()
+
+    try:
+        channel_enum = NotificationChannel(channel.lower())
+    except ValueError:
+        return {
+            "error": f"Invalid channel: {channel}",
+            "valid_channels": ["email", "slack", "discord", "console", "webhook"]
+        }
+
+    success = await notifier.send_notification(channel_enum, title, message, data)
+
+    return {
+        "status": "sent" if success else "failed",
+        "channel": channel,
+        "title": title,
+        "timestamp": datetime.now().isoformat()
     }
 
 
